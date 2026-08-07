@@ -1,0 +1,39 @@
+# Pipeline configuration
+pipeline:
+  input_dir: data/raw
+  output_dir: data/processed
+  results_dir: results
+
+quality_assessment:
+  enabled: true
+  model_path: models/quality_cnn/best_model.pth
+  threshold: 0.5
+  device: cpu
+
+ocr:
+  engine: paddleocr  # paddleocr | tesseract
+  language: en
+  paddleocr:
+    det_model_dir: null
+    rec_model_dir: null
+    use_angle_cls: true
+    use_gpu: false
+  tesseract:
+    psm: 6
+    oem: 3
+
+parsing:
+  method: llm  # regex | llm
+  llm:
+    model: gpt-4o-mini
+    temperature: 0
+    seed: 42
+    max_tokens: 2048
+  regex:
+    locale: en
+
+validation:
+  strict: false
+  required_fields:
+    - total
+    - items

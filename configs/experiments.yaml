@@ -1,0 +1,107 @@
+# Experiments configuration
+experiments:
+  dataset:
+    path: data/raw
+    annotations: data/annotations
+    split: test
+    max_samples: null  # null = use all
+
+  random_seed: 42
+  num_runs: 3  # multiple runs to measure variance
+
+  # Experiment definitions
+  list:
+    - id: 1
+      name: preprocessing_impact
+      description: "No preprocessing vs full preprocessing"
+      variable: preprocessing.enabled
+      values: [false, true]
+
+    - id: 2
+      name: clahe_impact
+      description: "CLAHE on vs off"
+      variable: preprocessing.enhancement.clahe.enabled
+      values: [false, true]
+
+    - id: 3
+      name: adaptive_threshold_impact
+      description: "Adaptive threshold on vs off"
+      variable: preprocessing.enhancement.adaptive_threshold.enabled
+      values: [false, true]
+
+    - id: 4
+      name: deskew_impact
+      description: "Deskew on vs off"
+      variable: preprocessing.deskew.enabled
+      values: [false, true]
+
+    - id: 5
+      name: ablation
+      description: "Full pipeline vs subsets"
+      variable: preprocessing.stages
+      values:
+        - [grayscale]
+        - [grayscale, clahe]
+        - [grayscale, clahe, deskew]
+        - [grayscale, clahe, deskew, threshold]
+        - [grayscale, clahe, deskew, threshold, morphology]
+
+    - id: 6
+      name: ocr_comparison
+      description: "PaddleOCR vs Tesseract"
+      variable: ocr.engine
+      values: [paddleocr, tesseract]
+
+    - id: 7
+      name: cnn_filter_impact
+      description: "Pipeline with CNN filter vs without"
+      variable: quality_assessment.enabled
+      values: [false, true]
+
+    - id: 8
+      name: cnn_threshold
+      description: "CNN rejection threshold sweep"
+      variable: quality_assessment.threshold
+      values: [0.3, 0.5, 0.7]
+
+    - id: 9
+      name: parser_comparison
+      description: "Regex vs LLM parser"
+      variable: parsing.method
+      values: [regex, llm]
+
+    - id: 10
+      name: llm_fewshot
+      description: "LLM zero-shot vs few-shot (3 examples)"
+      variable: parsing.llm.few_shot_examples
+      values: [0, 3]
+
+    - id: 11
+      name: ocr_source_isolation
+      description: "Ground truth OCR + Parser vs real OCR + Parser"
+      variable: ocr.source
+      values: [ground_truth, real]
+
+    - id: 12
+      name: full_vs_baseline
+      description: "Full pipeline vs naive baseline"
+      variable: pipeline.mode
+      values: [naive, full]
+
+    - id: 13
+      name: resolution_impact
+      description: "Input resolution comparison"
+      variable: preprocessing.resize.target_dpi
+      values: [300, 600, null]
+
+  # Metrics to collect for each experiment
+  metrics:
+    ocr: [cer, wer]
+    parser: [field_f1, macro_f1, anls, exact_match]
+    pipeline: [end_to_end_f1, latency_ms, throughput_docs_per_min]
+
+  # Output
+  output:
+    metrics_dir: results/metrics
+    figures_dir: results/figures
+    samples_dir: results/samples
