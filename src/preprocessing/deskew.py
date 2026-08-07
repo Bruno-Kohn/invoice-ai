@@ -90,7 +90,7 @@ def deskew(image: np.ndarray, method: str = "hough", max_angle: float = 45.0) ->
     else:
         raise ValueError(f"Unknown method: {method}")
 
-    if abs(angle) < 0.5 or abs(angle) > max_angle:
+    if abs(angle) < 5.0 or abs(angle) > max_angle:
         return image
 
     h, w = image.shape[:2]
