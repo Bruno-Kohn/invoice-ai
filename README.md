@@ -80,13 +80,13 @@ invoice-ai/
 
 ## Experiments
 
-| # | Experiment | What it measures |
-|---|-----------|-----------------|
-| 1-5 | Preprocessing ablation | Impact of each technique on CER |
-| 6 | PaddleOCR vs Tesseract | CER, WER, latency |
-| 7-8 | CNN quality filter | Trade-off rejection rate vs output quality |
-| 9-10 | Regex vs LLM | F1, latency, cost, robustness |
-| 11-13 | Pipeline variants | End-to-end performance |
+| #     | Experiment             | What it measures                           |
+| ----- | ---------------------- | ------------------------------------------ |
+| 1-5   | Preprocessing ablation | Impact of each technique on CER            |
+| 6     | PaddleOCR vs Tesseract | CER, WER, latency                          |
+| 7-8   | CNN quality filter     | Trade-off rejection rate vs output quality |
+| 9-10  | Regex vs LLM           | F1, latency, cost, robustness              |
+| 11-13 | Pipeline variants      | End-to-end performance                     |
 
 ## Tech Stack
 
