@@ -46,7 +46,7 @@
 - [x] Implementar script de geração de degradações sintéticas (blur, rotação, noise, JPEG, etc.)
 - [x] Gerar dataset sintético (~5000 imagens: 1000 × 5 degradações)
 - [x] Definir labels automáticos (CER < 5% → ready, > 20% → not_ready, entre → marginal)
-- [ ] Implementar `src/quality/dataset.py`
+- [x] Implementar `src/quality/dataset.py`
 - [ ] Implementar `src/quality/model.py` (MobileNetV2 transfer learning)
 - [ ] Implementar `src/quality/train.py`
 - [ ] Notebook `04_quality_model.ipynb` — treino e avaliação (ROC, confusion matrix, training curves)
