@@ -55,7 +55,7 @@
 
 - [x] Implementar `src/parsing/schema.py` (modelos Pydantic: Receipt, LineItem)
 - [x] Implementar `src/parsing/regex_parser.py`
-- [ ] Implementar `src/parsing/llm_parser.py` (GPT-4o-mini, temperature=0, JSON mode)
+- [x] Implementar `src/parsing/llm_parser.py` (Gemini 3.5 Flash, temperature=0, JSON mode)
 - [ ] Testar ambos parsers em subset com ground truth
 
 ---

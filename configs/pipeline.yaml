@@ -11,7 +11,7 @@ quality_assessment:
   device: cpu
 
 ocr:
-  engine: paddleocr  # paddleocr | tesseract
+  engine: paddleocr # paddleocr | tesseract
   language: en
   paddleocr:
     det_model_dir: null
@@ -23,9 +23,9 @@ ocr:
     oem: 3
 
 parsing:
-  method: llm  # regex | llm
+  method: llm # regex | llm
   llm:
-    model: gpt-4o-mini
+    model: gemini-3.5-flash
     temperature: 0
     seed: 42
     max_tokens: 2048

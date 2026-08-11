@@ -24,7 +24,7 @@ flowchart TD
     D --> E[OCR - PaddleOCR / Tesseract]
     E --> F[OCR Post-processing]
     F --> G1[Regex Parser]
-    F --> G2[LLM Parser - GPT-4o-mini]
+    F --> G2[LLM Parser - Gemini 3.5 Flash]
     G1 --> H[Validation - Pydantic]
     G2 --> H
     H --> I[Evaluation & Metrics]
@@ -35,7 +35,7 @@ flowchart TD
 - **Preprocessing**: CLAHE, deskew, perspective correction, adaptive threshold
 - **Quality Gate**: CNN (MobileNetV2) trained on synthetic degradations to reject low-quality inputs
 - **OCR**: PaddleOCR (SOTA) + Tesseract (baseline) comparison
-- **Parsing**: Regex vs LLM (GPT-4o-mini) with rigorous experimental comparison
+- **Parsing**: Regex vs LLM (Gemini 3.5 Flash) with rigorous experimental comparison
 - **Metrics**: CER, WER, Field-level F1, ANLS, Exact Match, latency, cost
 
 ## Dataset
@@ -93,7 +93,7 @@ invoice-ai/
 - **CV**: OpenCV, Pillow
 - **OCR**: PaddleOCR, Tesseract
 - **DL**: PyTorch, torchvision (MobileNetV2)
-- **LLM**: OpenAI GPT-4o-mini
+- **LLM**: Google Gemini 3.5 Flash
 - **Validation**: Pydantic v2
 - **Metrics**: scikit-learn, editdistance
 
