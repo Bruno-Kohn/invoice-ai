@@ -1,0 +1,13 @@
+{
+  "num_samples": 20,
+  "regex": {
+    "total_exact_match": 0.5,
+    "menu_item_f1": 0.09166666666666666,
+    "avg_latency_ms": 1.2364387512207031
+  },
+  "llm": {
+    "total_exact_match": 0.1,
+    "menu_item_f1": 0.08333333333333333,
+    "avg_latency_ms": 692.2394633293152
+  }
+}
