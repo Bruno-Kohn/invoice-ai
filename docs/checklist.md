@@ -49,7 +49,7 @@
 - [x] Implementar `src/quality/dataset.py`
 - [x] Implementar `src/quality/model.py` (MobileNetV2 transfer learning)
 - [x] Implementar `src/quality/train.py`
-- [ ] Notebook `04_quality_model.ipynb` — treino e avaliação (ROC, confusion matrix, training curves)
+- [x] Notebook `04_quality_model.ipynb` — treino e avaliação (ROC, confusion matrix, training curves)
 
 ### Parsers
 
