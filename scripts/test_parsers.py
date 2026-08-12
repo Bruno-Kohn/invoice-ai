@@ -147,12 +147,34 @@ def test_parsers(
                 f1_data = compute_field_f1(llm_prices, gt_prices)
                 llm_results["menu_f1"].append(f1_data["f1"])
             except Exception as e:
-                print(f"  LLM error on {ann_path.name}: {e}")
-                llm_results["time"].append(0)
-                llm_results["menu_f1"].append(0)
+                # Retry once after waiting if rate limited
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print(f"  Rate limited, waiting 65s...")
+                    time.sleep(65)
+                    try:
+                        t0 = time.time()
+                        llm_receipt = llm_parse(ocr_text)
+                        llm_time = time.time() - t0
+                        llm_results["time"].append(llm_time)
 
-            # Rate limit: 15 RPM for free tier
-            time.sleep(4.5)
+                        llm_total = extract_total_price(llm_receipt) or ""
+                        if llm_total.replace(",", "").replace(".", "") == gt_total.replace(",", "").replace(".", ""):
+                            llm_results["total_exact"] += 1
+
+                        llm_prices = [item.get("price", "") for item in extract_menu_items(llm_receipt) if item.get("price")]
+                        f1_data = compute_field_f1(llm_prices, gt_prices)
+                        llm_results["menu_f1"].append(f1_data["f1"])
+                    except Exception as e2:
+                        print(f"  LLM error on {ann_path.name}: {e2}")
+                        llm_results["time"].append(0)
+                        llm_results["menu_f1"].append(0)
+                else:
+                    print(f"  LLM error on {ann_path.name}: {e}")
+                    llm_results["time"].append(0)
+                    llm_results["menu_f1"].append(0)
+
+            # Rate limit: 20 req/day for free tier, space them out
+            time.sleep(5)
 
         print(f"  [{i+1}/{len(ann_files)}] {ann_path.name} done")
 
