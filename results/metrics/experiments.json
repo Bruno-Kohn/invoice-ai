@@ -532,5 +532,39 @@
       "rejected": 1,
       "rejected_pct": 0.1
     }
+  },
+  "exp8": {
+    "No Filter": {
+      "config": "No Filter",
+      "threshold": 0.0,
+      "cer_mean": 0.0,
+      "rejected": 10,
+      "rejected_pct": 1.0,
+      "accepted": 0
+    },
+    "Threshold=0.3": {
+      "config": "Threshold=0.3",
+      "threshold": 0.3,
+      "cer_mean": 0.09031777365297966,
+      "rejected": 3,
+      "rejected_pct": 0.3,
+      "accepted": 7
+    },
+    "Threshold=0.5": {
+      "config": "Threshold=0.5",
+      "threshold": 0.5,
+      "cer_mean": 0.14704260383979995,
+      "rejected": 1,
+      "rejected_pct": 0.1,
+      "accepted": 9
+    },
+    "Threshold=0.7": {
+      "config": "Threshold=0.7",
+      "threshold": 0.7,
+      "cer_mean": 0.15818868359187438,
+      "rejected": 0,
+      "rejected_pct": 0.0,
+      "accepted": 10
+    }
   }
 }
