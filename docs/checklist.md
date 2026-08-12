@@ -70,7 +70,7 @@
 
 ### Experimentos (13 total)
 
-- [ ] Exp 1: Sem pré-processamento vs com
+- [x] Exp 1: Sem pré-processamento vs com
 - [ ] Exp 2: CLAHE vs sem CLAHE
 - [ ] Exp 3: Adaptive Threshold vs sem
 - [ ] Exp 4: Deskew on vs off
