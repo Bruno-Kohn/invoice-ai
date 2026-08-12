@@ -74,7 +74,7 @@
 - [x] Exp 2: CLAHE vs sem CLAHE
 - [x] Exp 3: Adaptive Threshold vs sem
 - [x] Exp 4: Deskew on vs off
-- [ ] Exp 5: Ablation — pipeline completa vs subconjuntos
+- [x] Exp 5: Ablation — pipeline completa vs subconjuntos
 - [ ] Exp 6: PaddleOCR vs Tesseract (CER, WER, latência)
 - [ ] Exp 7: Pipeline com CNN filter vs sem
 - [ ] Exp 8: Threshold de rejeição CNN (0.3 / 0.5 / 0.7)
