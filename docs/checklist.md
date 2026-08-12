@@ -82,7 +82,7 @@
 - [ ] Exp 10: LLM zero-shot vs few-shot (3 exemplos)
 - [x] Exp 11: OCR ground truth + Parser vs OCR real + Parser
 - [x] Exp 12: Pipeline completa vs baseline naive
-- [ ] Exp 13: Diferentes resoluções (300 / 600 / original DPI)
+- [x] Exp 13: Diferentes resoluções (300 / 600 / original DPI)
 
 ### Notebooks
 
