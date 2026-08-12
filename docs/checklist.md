@@ -76,7 +76,7 @@
 - [x] Exp 4: Deskew on vs off
 - [x] Exp 5: Ablation — pipeline completa vs subconjuntos
 - [x] Exp 6: PaddleOCR vs Tesseract (CER, WER, latência)
-- [ ] Exp 7: Pipeline com CNN filter vs sem
+- [x] Exp 7: Pipeline com CNN filter vs sem
 - [ ] Exp 8: Threshold de rejeição CNN (0.3 / 0.5 / 0.7)
 - [ ] Exp 9: Regex vs LLM (F1, latência, custo)
 - [ ] Exp 10: LLM zero-shot vs few-shot (3 exemplos)

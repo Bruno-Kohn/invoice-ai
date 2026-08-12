@@ -359,6 +359,555 @@ def exp6_ocr_comparison(samples):
     return results
 
 
+def exp7_cnn_filter(samples, engine):
+    """Exp 7: Pipeline with CNN quality filter vs without."""
+    print("\n" + "=" * 60)
+    print("EXP 7: CNN Quality Filter vs No Filter")
+    print("=" * 60)
+
+    import torch
+    from src.quality.model import QualityClassifier
+    from src.quality.dataset import default_transform, IDX_TO_LABEL
+
+    model_path = Path("models/quality_cnn/best_model.pth")
+    if not model_path.exists():
+        print("  ERROR: CNN model not found. Run training first.")
+        return {}
+
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    model = QualityClassifier(num_classes=3, pretrained=False)
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+    model.to(device)
+    model.eval()
+    transform = default_transform()
+
+    config = {
+        "preprocessing": True, "detect_document": True,
+        "deskew": True, "clahe": True, "bilateral_filter": True,
+    }
+
+    # Without filter — process all
+    print("\n  Running: No CNN Filter (process all)")
+    no_filter = run_config(samples, engine, config, "No Filter")
+
+    # With filter — skip not_ready
+    print("\n  Running: With CNN Filter (skip not_ready)")
+    cer_scores = []
+    wer_scores = []
+    times = []
+    rejected = 0
+
+    for i, sample in enumerate(samples):
+        img = cv2.imread(str(sample["img_path"]))
+        if img is None:
+            continue
+
+        t0 = time.time()
+
+        # Quality check
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        tensor = transform(img_rgb).unsqueeze(0).to(device)
+        with torch.no_grad():
+            probs = model.predict_proba(tensor)[0]
+        pred_idx = torch.argmax(probs).item()
+        label = IDX_TO_LABEL[pred_idx]
+
+        if label == "not_ready":
+            rejected += 1
+            elapsed = time.time() - t0
+            times.append(elapsed)
+            cer_scores.append(1.0)  # Worst case for rejected
+            wer_scores.append(1.0)
+            print(f"    [{i+1}/{len(samples)}] REJECTED (not_ready) [{elapsed:.1f}s]")
+            continue
+
+        processed = preprocess_image(img, config)
+        if len(processed.shape) == 2:
+            processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+        ocr_text = run_ocr_on_image(processed, engine)
+        elapsed = time.time() - t0
+
+        cer = character_error_rate(ocr_text, sample["gt_text"])
+        wer = word_error_rate(ocr_text, sample["gt_text"])
+        cer_scores.append(cer)
+        wer_scores.append(wer)
+        times.append(elapsed)
+        print(f"    [{i+1}/{len(samples)}] CER={cer:.3f} WER={wer:.3f} [{elapsed:.1f}s]")
+
+    with_filter = {
+        "config": "With CNN Filter",
+        "cer_mean": float(np.mean(cer_scores)),
+        "wer_mean": float(np.mean(wer_scores)),
+        "avg_time": float(np.mean(times)),
+        "rejected": rejected,
+        "rejected_pct": rejected / len(samples),
+    }
+
+    results = {"No Filter": no_filter, "With CNN Filter": with_filter}
+
+    labels = list(results.keys())
+    cer_vals = [results[l]["cer_mean"] for l in labels]
+    plot_metric_comparison(labels, cer_vals, "CER",
+                           title="Exp 7: CNN Quality Filter",
+                           save_name="exp7_cnn_filter")
+    return results
+
+
+def exp8_cnn_thresholds(samples, engine):
+    """Exp 8: CNN rejection thresholds (0.3, 0.5, 0.7)."""
+    print("\n" + "=" * 60)
+    print("EXP 8: CNN Rejection Thresholds")
+    print("=" * 60)
+
+    import torch
+    from src.quality.model import QualityClassifier
+    from src.quality.dataset import default_transform, IDX_TO_LABEL
+
+    model_path = Path("models/quality_cnn/best_model.pth")
+    if not model_path.exists():
+        print("  ERROR: CNN model not found.")
+        return {}
+
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    model = QualityClassifier(num_classes=3, pretrained=False)
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+    model.to(device)
+    model.eval()
+    transform = default_transform()
+
+    config = {
+        "preprocessing": True, "detect_document": True,
+        "deskew": True, "clahe": True, "bilateral_filter": True,
+    }
+
+    # Pre-compute quality scores and OCR for all samples
+    sample_data = []
+    for i, sample in enumerate(samples):
+        img = cv2.imread(str(sample["img_path"]))
+        if img is None:
+            continue
+
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        tensor = transform(img_rgb).unsqueeze(0).to(device)
+        with torch.no_grad():
+            probs = model.predict_proba(tensor)[0]
+        not_ready_prob = probs[2].item()  # P(not_ready)
+
+        processed = preprocess_image(img, config)
+        if len(processed.shape) == 2:
+            processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+        ocr_text = run_ocr_on_image(processed, engine)
+
+        cer = character_error_rate(ocr_text, sample["gt_text"])
+        sample_data.append({"cer": cer, "not_ready_prob": not_ready_prob})
+        print(f"    [{i+1}/{len(samples)}] CER={cer:.3f} P(not_ready)={not_ready_prob:.3f}")
+
+    # Evaluate at different thresholds
+    thresholds = [0.0, 0.3, 0.5, 0.7]
+    results = {}
+    for thresh in thresholds:
+        accepted = [s for s in sample_data if s["not_ready_prob"] < thresh]
+        rejected = len(sample_data) - len(accepted)
+        avg_cer = float(np.mean([s["cer"] for s in accepted])) if accepted else 0.0
+
+        name = f"Threshold={thresh}" if thresh > 0 else "No Filter"
+        results[name] = {
+            "config": name,
+            "threshold": thresh,
+            "cer_mean": avg_cer,
+            "rejected": rejected,
+            "rejected_pct": rejected / len(sample_data) if sample_data else 0,
+            "accepted": len(accepted),
+        }
+        print(f"  {name}: CER={avg_cer:.3f}, rejected={rejected}/{len(sample_data)}")
+
+    from src.evaluation.visualization import plot_line
+    thresh_labels = [str(t) for t in thresholds]
+    cer_vals = [results[n]["cer_mean"] for n in results]
+    rejected_pcts = [results[n]["rejected_pct"] for n in results]
+
+    plot_line(
+        thresholds,
+        {"CER (accepted only)": cer_vals, "Rejection Rate": rejected_pcts},
+        title="Exp 8: CER vs CNN Rejection Threshold",
+        xlabel="Threshold",
+        ylabel="Score",
+        save_name="exp8_cnn_thresholds",
+    )
+    return results
+
+
+def exp9_regex_vs_llm(samples, engine):
+    """Exp 9: Regex vs LLM parser (F1, latency)."""
+    print("\n" + "=" * 60)
+    print("EXP 9: Regex vs LLM Parser")
+    print("=" * 60)
+
+    from src.parsing.regex_parser import parse_receipt as regex_parse
+    from src.parsing.llm_parser import parse_receipt as llm_parse
+    from src.evaluation.metrics import evaluate_receipt
+
+    config = {
+        "preprocessing": True, "detect_document": True,
+        "deskew": True, "clahe": True, "bilateral_filter": True,
+    }
+
+    # Get OCR text for all samples first
+    print("\n  Running OCR on all samples...")
+    ocr_texts = []
+    gt_parses = []
+    for i, sample in enumerate(samples):
+        img = cv2.imread(str(sample["img_path"]))
+        if img is None:
+            continue
+        processed = preprocess_image(img, config)
+        if len(processed.shape) == 2:
+            processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+        ocr_text = run_ocr_on_image(processed, engine)
+        ocr_texts.append(ocr_text)
+
+        with open(sample["ann_path"]) as f:
+            data = json.load(f)
+        gt = data.get("gt_parse", {})
+        if isinstance(gt, str):
+            gt = json.loads(gt)
+        gt_parses.append(gt)
+        print(f"    [{i+1}/{len(samples)}] OCR done")
+
+    # Regex parser
+    print("\n  Running: Regex Parser")
+    regex_metrics = {"f1": [], "anls": [], "total_em": [], "time": []}
+    for i, (ocr_text, gt) in enumerate(zip(ocr_texts, gt_parses)):
+        t0 = time.time()
+        receipt = regex_parse(ocr_text)
+        elapsed = time.time() - t0
+        metrics = evaluate_receipt(receipt.model_dump(), gt)
+        regex_metrics["f1"].append(metrics["f1"])
+        regex_metrics["anls"].append(metrics["anls"])
+        regex_metrics["total_em"].append(1.0 if metrics["total_exact_match"] else 0.0)
+        regex_metrics["time"].append(elapsed)
+        print(f"    [{i+1}/{len(ocr_texts)}] F1={metrics['f1']:.3f} ANLS={metrics['anls']:.3f}")
+
+    # LLM parser
+    print("\n  Running: LLM Parser")
+    llm_metrics = {"f1": [], "anls": [], "total_em": [], "time": []}
+    for i, (ocr_text, gt) in enumerate(zip(ocr_texts, gt_parses)):
+        t0 = time.time()
+        try:
+            receipt = llm_parse(ocr_text)
+            elapsed = time.time() - t0
+            metrics = evaluate_receipt(receipt.model_dump(), gt)
+            llm_metrics["f1"].append(metrics["f1"])
+            llm_metrics["anls"].append(metrics["anls"])
+            llm_metrics["total_em"].append(1.0 if metrics["total_exact_match"] else 0.0)
+            llm_metrics["time"].append(elapsed)
+            print(f"    [{i+1}/{len(ocr_texts)}] F1={metrics['f1']:.3f} ANLS={metrics['anls']:.3f}")
+        except Exception as e:
+            if "429" in str(e):
+                print(f"    [{i+1}/{len(ocr_texts)}] Rate limited, waiting 65s...")
+                time.sleep(65)
+                try:
+                    t0 = time.time()
+                    receipt = llm_parse(ocr_text)
+                    elapsed = time.time() - t0
+                    metrics = evaluate_receipt(receipt.model_dump(), gt)
+                    llm_metrics["f1"].append(metrics["f1"])
+                    llm_metrics["anls"].append(metrics["anls"])
+                    llm_metrics["total_em"].append(1.0 if metrics["total_exact_match"] else 0.0)
+                    llm_metrics["time"].append(elapsed)
+                    print(f"    [{i+1}/{len(ocr_texts)}] F1={metrics['f1']:.3f} (retry)")
+                except Exception:
+                    llm_metrics["f1"].append(0)
+                    llm_metrics["anls"].append(0)
+                    llm_metrics["total_em"].append(0)
+                    llm_metrics["time"].append(0)
+                    print(f"    [{i+1}/{len(ocr_texts)}] FAILED")
+            else:
+                llm_metrics["f1"].append(0)
+                llm_metrics["anls"].append(0)
+                llm_metrics["total_em"].append(0)
+                llm_metrics["time"].append(0)
+                print(f"    [{i+1}/{len(ocr_texts)}] ERROR: {e}")
+        time.sleep(5)
+
+    results = {
+        "Regex": {
+            "f1_mean": float(np.mean(regex_metrics["f1"])),
+            "anls_mean": float(np.mean(regex_metrics["anls"])),
+            "total_em": float(np.mean(regex_metrics["total_em"])),
+            "avg_time_ms": float(np.mean(regex_metrics["time"])) * 1000,
+        },
+        "LLM (Gemini)": {
+            "f1_mean": float(np.mean(llm_metrics["f1"])),
+            "anls_mean": float(np.mean(llm_metrics["anls"])),
+            "total_em": float(np.mean(llm_metrics["total_em"])),
+            "avg_time_ms": float(np.mean(llm_metrics["time"])) * 1000,
+        },
+    }
+
+    labels = ["Regex", "LLM (Gemini)"]
+    plot_grouped_bar(
+        labels,
+        {
+            "F1": [results[l]["f1_mean"] for l in labels],
+            "ANLS": [results[l]["anls_mean"] for l in labels],
+            "Total EM": [results[l]["total_em"] for l in labels],
+        },
+        title="Exp 9: Regex vs LLM Parser",
+        ylabel="Score",
+        save_name="exp9_regex_vs_llm",
+    )
+    return results
+
+
+def exp10_llm_zeroshot_fewshot(samples, engine):
+    """Exp 10: LLM zero-shot vs few-shot."""
+    print("\n" + "=" * 60)
+    print("EXP 10: LLM Zero-shot vs Few-shot")
+    print("=" * 60)
+
+    from src.parsing.llm_parser import parse_receipt as llm_parse
+    from src.evaluation.metrics import evaluate_receipt
+
+    config = {
+        "preprocessing": True, "detect_document": True,
+        "deskew": True, "clahe": True, "bilateral_filter": True,
+    }
+
+    # Get OCR text
+    print("\n  Running OCR...")
+    ocr_data = []
+    for i, sample in enumerate(samples):
+        img = cv2.imread(str(sample["img_path"]))
+        if img is None:
+            continue
+        processed = preprocess_image(img, config)
+        if len(processed.shape) == 2:
+            processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+        ocr_text = run_ocr_on_image(processed, engine)
+
+        with open(sample["ann_path"]) as f:
+            data = json.load(f)
+        gt = data.get("gt_parse", {})
+        if isinstance(gt, str):
+            gt = json.loads(gt)
+        ocr_data.append({"ocr_text": ocr_text, "gt": gt})
+        print(f"    [{i+1}/{len(samples)}] OCR done")
+
+    results = {}
+    for mode_name, few_shot in [("Zero-shot", False), ("Few-shot", True)]:
+        print(f"\n  Running: {mode_name}")
+        f1_scores = []
+        for i, item in enumerate(ocr_data):
+            try:
+                receipt = llm_parse(item["ocr_text"], few_shot=few_shot)
+                metrics = evaluate_receipt(receipt.model_dump(), item["gt"])
+                f1_scores.append(metrics["f1"])
+                print(f"    [{i+1}/{len(ocr_data)}] F1={metrics['f1']:.3f}")
+            except Exception as e:
+                if "429" in str(e):
+                    print(f"    [{i+1}/{len(ocr_data)}] Rate limited, waiting 65s...")
+                    time.sleep(65)
+                    try:
+                        receipt = llm_parse(item["ocr_text"], few_shot=few_shot)
+                        metrics = evaluate_receipt(receipt.model_dump(), item["gt"])
+                        f1_scores.append(metrics["f1"])
+                        print(f"    [{i+1}/{len(ocr_data)}] F1={metrics['f1']:.3f} (retry)")
+                    except Exception:
+                        f1_scores.append(0)
+                        print(f"    [{i+1}/{len(ocr_data)}] FAILED")
+                else:
+                    f1_scores.append(0)
+                    print(f"    [{i+1}/{len(ocr_data)}] ERROR")
+            time.sleep(5)
+
+        results[mode_name] = {"f1_mean": float(np.mean(f1_scores)), "f1_scores": f1_scores}
+
+    labels = list(results.keys())
+    f1_vals = [results[l]["f1_mean"] for l in labels]
+    plot_metric_comparison(labels, f1_vals, "F1",
+                           title="Exp 10: Zero-shot vs Few-shot",
+                           save_name="exp10_zeroshot_fewshot")
+    return results
+
+
+def exp11_gt_vs_real_ocr(samples, engine):
+    """Exp 11: Ground truth text + Parser vs Real OCR + Parser."""
+    print("\n" + "=" * 60)
+    print("EXP 11: GT Text vs Real OCR → Parser")
+    print("=" * 60)
+
+    from src.parsing.regex_parser import parse_receipt as regex_parse
+    from src.evaluation.metrics import evaluate_receipt
+
+    config = {
+        "preprocessing": True, "detect_document": True,
+        "deskew": True, "clahe": True, "bilateral_filter": True,
+    }
+
+    results = {}
+    for source_name in ["Ground Truth Text", "Real OCR"]:
+        print(f"\n  Running: {source_name}")
+        f1_scores = []
+
+        for i, sample in enumerate(samples):
+            with open(sample["ann_path"]) as f:
+                data = json.load(f)
+            gt = data.get("gt_parse", {})
+            if isinstance(gt, str):
+                gt = json.loads(gt)
+
+            if source_name == "Ground Truth Text":
+                text = sample["gt_text"]
+            else:
+                img = cv2.imread(str(sample["img_path"]))
+                if img is None:
+                    continue
+                processed = preprocess_image(img, config)
+                if len(processed.shape) == 2:
+                    processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+                text = run_ocr_on_image(processed, engine)
+
+            receipt = regex_parse(text)
+            metrics = evaluate_receipt(receipt.model_dump(), gt)
+            f1_scores.append(metrics["f1"])
+            print(f"    [{i+1}/{len(samples)}] F1={metrics['f1']:.3f}")
+
+        results[source_name] = {
+            "f1_mean": float(np.mean(f1_scores)),
+            "f1_scores": [float(f) for f in f1_scores],
+        }
+
+    labels = list(results.keys())
+    f1_vals = [results[l]["f1_mean"] for l in labels]
+    plot_metric_comparison(labels, f1_vals, "F1",
+                           title="Exp 11: GT Text vs Real OCR → Regex Parser",
+                           save_name="exp11_gt_vs_ocr")
+    return results
+
+
+def exp12_full_vs_naive(samples, engine):
+    """Exp 12: Full pipeline vs naive baseline (no preprocessing, no postprocessing)."""
+    print("\n" + "=" * 60)
+    print("EXP 12: Full Pipeline vs Naive Baseline")
+    print("=" * 60)
+
+    from src.parsing.regex_parser import parse_receipt as regex_parse
+    from src.evaluation.metrics import evaluate_receipt
+
+    results = {}
+    configs = {
+        "Naive (raw OCR)": {"preprocessing": False},
+        "Full Pipeline": {
+            "preprocessing": True, "detect_document": True,
+            "deskew": True, "clahe": True, "bilateral_filter": True,
+        },
+    }
+
+    for name, config in configs.items():
+        print(f"\n  Running: {name}")
+        f1_scores = []
+        cer_scores = []
+
+        for i, sample in enumerate(samples):
+            img = cv2.imread(str(sample["img_path"]))
+            if img is None:
+                continue
+
+            if config.get("preprocessing", True):
+                processed = preprocess_image(img, config)
+            else:
+                processed = img
+            if len(processed.shape) == 2:
+                processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+
+            ocr_text = run_ocr_on_image(processed, engine)
+            cer = character_error_rate(ocr_text, sample["gt_text"])
+            cer_scores.append(cer)
+
+            with open(sample["ann_path"]) as f:
+                data = json.load(f)
+            gt = data.get("gt_parse", {})
+            if isinstance(gt, str):
+                gt = json.loads(gt)
+
+            receipt = regex_parse(ocr_text)
+            metrics = evaluate_receipt(receipt.model_dump(), gt)
+            f1_scores.append(metrics["f1"])
+            print(f"    [{i+1}/{len(samples)}] CER={cer:.3f} F1={metrics['f1']:.3f}")
+
+        results[name] = {
+            "cer_mean": float(np.mean(cer_scores)),
+            "f1_mean": float(np.mean(f1_scores)),
+        }
+
+    labels = list(results.keys())
+    plot_grouped_bar(
+        labels,
+        {
+            "CER": [results[l]["cer_mean"] for l in labels],
+            "F1": [results[l]["f1_mean"] for l in labels],
+        },
+        title="Exp 12: Full Pipeline vs Naive Baseline",
+        ylabel="Score",
+        save_name="exp12_full_vs_naive",
+    )
+    return results
+
+
+def exp13_resolutions(samples, engine):
+    """Exp 13: Different image resolutions."""
+    print("\n" + "=" * 60)
+    print("EXP 13: Different Resolutions")
+    print("=" * 60)
+
+    config = {
+        "preprocessing": True, "detect_document": True,
+        "deskew": True, "clahe": True, "bilateral_filter": True,
+    }
+
+    results = {}
+    for res_name, scale in [("25% (low)", 0.25), ("50% (medium)", 0.5), ("100% (original)", 1.0)]:
+        print(f"\n  Running: {res_name}")
+        cer_scores = []
+        times = []
+
+        for i, sample in enumerate(samples):
+            img = cv2.imread(str(sample["img_path"]))
+            if img is None:
+                continue
+
+            t0 = time.time()
+
+            if scale < 1.0:
+                h, w = img.shape[:2]
+                img = cv2.resize(img, (int(w * scale), int(h * scale)))
+
+            processed = preprocess_image(img, config)
+            if len(processed.shape) == 2:
+                processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+            ocr_text = run_ocr_on_image(processed, engine)
+            elapsed = time.time() - t0
+
+            cer = character_error_rate(ocr_text, sample["gt_text"])
+            cer_scores.append(cer)
+            times.append(elapsed)
+            print(f"    [{i+1}/{len(samples)}] CER={cer:.3f} [{elapsed:.1f}s]")
+
+        results[res_name] = {
+            "cer_mean": float(np.mean(cer_scores)),
+            "avg_time": float(np.mean(times)),
+            "cer_scores": [float(c) for c in cer_scores],
+        }
+
+    labels = list(results.keys())
+    cer_vals = [results[l]["cer_mean"] for l in labels]
+    plot_metric_comparison(labels, cer_vals, "CER",
+                           title="Exp 13: CER by Image Resolution",
+                           save_name="exp13_resolutions")
+    return results
+
+
 EXPERIMENTS = {
     1: ("Preprocessing vs No Preprocessing", exp1_preprocessing),
     2: ("CLAHE vs No CLAHE", exp2_clahe),
@@ -366,6 +915,13 @@ EXPERIMENTS = {
     4: ("Deskew On vs Off", exp4_deskew),
     5: ("Ablation Study", exp5_ablation),
     6: ("PaddleOCR vs Tesseract", exp6_ocr_comparison),
+    7: ("CNN Quality Filter", exp7_cnn_filter),
+    8: ("CNN Rejection Thresholds", exp8_cnn_thresholds),
+    9: ("Regex vs LLM", exp9_regex_vs_llm),
+    10: ("LLM Zero-shot vs Few-shot", exp10_llm_zeroshot_fewshot),
+    11: ("GT Text vs Real OCR", exp11_gt_vs_real_ocr),
+    12: ("Full Pipeline vs Naive", exp12_full_vs_naive),
+    13: ("Different Resolutions", exp13_resolutions),
 }
 
 
@@ -382,8 +938,9 @@ if __name__ == "__main__":
     samples = load_test_data(args.samples)
     print(f"Loaded {len(samples)} samples\n")
 
-    # Initialize PaddleOCR engine (shared across experiments except exp6)
-    needs_paddle = any(e != 6 for e in exp_nums)
+    # Initialize PaddleOCR engine (shared across most experiments)
+    standalone_exps = {6}  # These init their own engines
+    needs_paddle = any(e not in standalone_exps for e in exp_nums)
     engine = None
     if needs_paddle:
         print("Initializing PaddleOCR...")
@@ -397,7 +954,7 @@ if __name__ == "__main__":
             continue
 
         name, func = EXPERIMENTS[exp_num]
-        if exp_num == 6:
+        if exp_num in standalone_exps:
             results = func(samples)
         else:
             results = func(samples, engine)
