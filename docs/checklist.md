@@ -81,7 +81,7 @@
 - [ ] Exp 9: Regex vs LLM (F1, latência, custo)
 - [ ] Exp 10: LLM zero-shot vs few-shot (3 exemplos)
 - [x] Exp 11: OCR ground truth + Parser vs OCR real + Parser
-- [ ] Exp 12: Pipeline completa vs baseline naive
+- [x] Exp 12: Pipeline completa vs baseline naive
 - [ ] Exp 13: Diferentes resoluções (300 / 600 / original DPI)
 
 ### Notebooks
