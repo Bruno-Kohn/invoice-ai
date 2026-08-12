@@ -66,7 +66,7 @@
 
 - [x] Implementar `src/pipeline.py` (orquestração completa: img → JSON)
 - [x] Implementar `src/evaluation/metrics.py` (CER, WER, F1, ANLS, Exact Match)
-- [ ] Implementar `src/evaluation/visualization.py` (gráficos)
+- [x] Implementar `src/evaluation/visualization.py` (gráficos)
 
 ### Experimentos (13 total)
 
