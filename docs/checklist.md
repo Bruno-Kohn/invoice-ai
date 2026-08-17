@@ -95,18 +95,18 @@
 
 ### Resultados e Visualizações
 
-- [ ] Notebook `06_final_results.ipynb` (consolidação)
-- [ ] Gerar bar chart: CER por técnica de pré-processamento
+- [x] Notebook `06_final_results.ipynb` (consolidação)
+- [x] Gerar bar chart: CER por técnica de pré-processamento
 - [ ] Gerar heatmap: F1 por campo × abordagem
-- [ ] Gerar box plot: distribuição de scores de qualidade
-- [ ] Gerar ROC curve da CNN
-- [ ] Gerar confusion matrix da CNN
-- [ ] Gerar line chart: F1 vs threshold de rejeição
-- [ ] Gerar scatter plot: CNN score vs CER
-- [ ] Gerar radar chart: Regex vs LLM
-- [ ] Gerar waterfall chart: contribuição de cada etapa no F1
+- [x] Gerar box plot: distribuição de scores de qualidade
+- [x] Gerar ROC curve da CNN
+- [x] Gerar confusion matrix da CNN
+- [x] Gerar line chart: F1 vs threshold de rejeição
+- [x] Gerar scatter plot: CNN score vs CER
+- [x] Gerar radar chart: Regex vs LLM
+- [x] Gerar waterfall chart: contribuição de cada etapa no F1
 - [ ] Gerar grid de imagens: antes/depois pré-processamento
-- [ ] Gerar training curves: loss/accuracy da CNN
+- [x] Gerar training curves: loss/accuracy da CNN
 
 ### Imagens para Relatório
 
