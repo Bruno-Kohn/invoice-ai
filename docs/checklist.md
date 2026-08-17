@@ -86,7 +86,7 @@
 
 ### Notebooks
 
-- [ ] Notebook `03_ocr_comparison.ipynb`
+- [x] Notebook `03_ocr_comparison.ipynb`
 - [ ] Notebook `05_parser_comparison.ipynb`
 
 ---
