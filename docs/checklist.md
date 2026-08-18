@@ -110,13 +110,13 @@
 
 ### Imagens para Relatório
 
-- [ ] Pipeline visual de 1 imagem (boa, média, ruim) por cada etapa
-- [ ] Histograma antes/depois de CLAHE
-- [ ] Deskew antes/depois
-- [ ] Bounding boxes do OCR sobrepostos
+- [x] Pipeline visual de 1 imagem (boa, média, ruim) por cada etapa
+- [x] Histograma antes/depois de CLAHE
+- [x] Deskew antes/depois
+- [x] Bounding boxes do OCR sobrepostos
 - [ ] Grad-CAM da CNN
-- [ ] Exemplos de falha (OCR errado, parser errado)
-- [ ] Diagrama da arquitetura da CNN
+- [x] Exemplos de falha (OCR errado, parser errado)
+- [x] Diagrama da arquitetura da CNN
 
 ### Documentação e Polish
 
