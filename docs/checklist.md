@@ -121,7 +121,7 @@
 ### Documentação e Polish
 
 - [x] Escrever relatório final
-- [ ] Polir README (badges, GIF demo, screenshots, tabela de resultados)
+- [x] Polir README (badges, GIF demo, screenshots, tabela de resultados)
 - [ ] Testes unitários (`tests/test_preprocessing.py`, `test_ocr.py`, `test_parsing.py`)
 - [ ] Diagrama de arquitetura no README (mermaid)
 
