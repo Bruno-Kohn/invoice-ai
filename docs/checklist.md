@@ -123,7 +123,7 @@
 - [x] Escrever relatório final
 - [x] Polir README (badges, GIF demo, screenshots, tabela de resultados)
 - [x] Testes unitários (`tests/test_preprocessing.py`, `test_ocr.py`, `test_parsing.py`)
-- [ ] Diagrama de arquitetura no README (mermaid)
+- [x] Diagrama de arquitetura no README (mermaid)
 
 ### Stretch Goals
 
