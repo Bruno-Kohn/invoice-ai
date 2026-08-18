@@ -59,6 +59,12 @@ def _extract_menu_items(lines: list[str]) -> list[LineItem]:
         "cash", "credit", "disc", "discount", "ppn", "pbr", "charge",
         "payment", "member", "date", "time", "table", "cashier",
         "receipt", "invoice", "order", "bill", "thank", "terima",
+        # PT-BR keywords
+        "valor", "troco", "dinheiro", "cartao", "cartão", "debito", "débito",
+        "credito", "crédito", "cpf", "cnpj", "nf-e", "nfce", "cupom",
+        "fiscal", "icms", "pis", "cofins", "operador", "caixa",
+        "obrigado", "volte", "sempre", "consumidor", "emissao", "emissão",
+        "chave", "acesso", "protocolo", "serie", "série", "numero", "número",
     }
 
     for line in lines:
@@ -87,10 +93,10 @@ def _extract_menu_items(lines: list[str]) -> list[LineItem]:
 
 def _extract_subtotal(lines: list[str]) -> Optional[SubTotal]:
     """Extract subtotal, tax, service from OCR lines."""
-    subtotal_price = _find_price_for_keyword(lines, ["subtotal", "sub total", "sub-total"])
-    tax_price = _find_price_for_keyword(lines, ["tax", "ppn", "pajak", "vat"])
-    service_price = _find_price_for_keyword(lines, ["service", "servis", "svc"])
-    discount_price = _find_price_for_keyword(lines, ["discount", "disc", "diskon"])
+    subtotal_price = _find_price_for_keyword(lines, ["subtotal", "sub total", "sub-total", "valor produtos"])
+    tax_price = _find_price_for_keyword(lines, ["tax", "ppn", "pajak", "vat", "icms", "imposto", "tributos"])
+    service_price = _find_price_for_keyword(lines, ["service", "servis", "svc", "taxa", "servico", "serviço"])
+    discount_price = _find_price_for_keyword(lines, ["discount", "disc", "diskon", "desconto", "desc"])
 
     if any([subtotal_price, tax_price, service_price, discount_price]):
         return SubTotal(
@@ -104,9 +110,9 @@ def _extract_subtotal(lines: list[str]) -> Optional[SubTotal]:
 
 def _extract_total(lines: list[str]) -> Total:
     """Extract total, cash, and change from OCR lines."""
-    total_price = _find_price_for_keyword(lines, ["total", "grand total", "jumlah"])
-    cash_price = _find_price_for_keyword(lines, ["cash", "tunai", "bayar"])
-    change_price = _find_price_for_keyword(lines, ["change", "kembalian", "kembali"])
+    total_price = _find_price_for_keyword(lines, ["total", "grand total", "jumlah", "valor total", "vlr total"])
+    cash_price = _find_price_for_keyword(lines, ["cash", "tunai", "bayar", "dinheiro", "especie", "espécie"])
+    change_price = _find_price_for_keyword(lines, ["change", "kembalian", "kembali", "troco"])
 
     return Total(
         total_price=total_price,
