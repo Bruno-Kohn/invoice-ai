@@ -97,7 +97,7 @@
 
 - [x] Notebook `06_final_results.ipynb` (consolidação)
 - [x] Gerar bar chart: CER por técnica de pré-processamento
-- [ ] Gerar heatmap: F1 por campo × abordagem
+- [x] Gerar heatmap: F1 por campo × abordagem
 - [x] Gerar box plot: distribuição de scores de qualidade
 - [x] Gerar ROC curve da CNN
 - [x] Gerar confusion matrix da CNN
@@ -105,7 +105,7 @@
 - [x] Gerar scatter plot: CNN score vs CER
 - [x] Gerar radar chart: Regex vs LLM
 - [x] Gerar waterfall chart: contribuição de cada etapa no F1
-- [ ] Gerar grid de imagens: antes/depois pré-processamento
+- [x] Gerar grid de imagens: antes/depois pré-processamento
 - [x] Gerar training curves: loss/accuracy da CNN
 
 ### Imagens para Relatório
