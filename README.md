@@ -14,13 +14,13 @@ Pipeline completa de Document AI que transforma imagens de notas fiscais/recibos
 
 ### Key Results
 
-| Metric | Value |
-|--------|-------|
-| **CER reduction** (preprocessing) | -46% |
-| **PaddleOCR vs Tesseract** | 4x better quality |
-| **LLM vs Regex parser** | +23% F1, +44% ANLS |
-| **CNN Quality Gate** (threshold 0.3) | -43% CER, 30% rejected |
-| **Full pipeline F1** | 0.554 (Regex) / 0.681 (LLM) |
+| Metric                               | Value                       |
+| ------------------------------------ | --------------------------- |
+| **CER reduction** (preprocessing)    | -46%                        |
+| **PaddleOCR vs Tesseract**           | 4x better quality           |
+| **LLM vs Regex parser**              | +23% F1, +44% ANLS          |
+| **CNN Quality Gate** (threshold 0.3) | -43% CER, 30% rejected      |
+| **Full pipeline F1**                 | 0.554 (Regex) / 0.681 (LLM) |
 
 ```
 Image → Document Detection → Quality Assessment (CNN) → Preprocessing → OCR → Parsing → JSON
@@ -93,21 +93,21 @@ invoice-ai/
 
 ## Experiments
 
-| # | Experiment | Result |
-|---|-----------|--------|
-| 1 | Preprocessing ON/OFF | CER: 0.294 → 0.158 (**-46%**) |
-| 2 | CLAHE ON/OFF | CER: 0.254 → 0.158 (**-38%**) |
-| 3 | Adaptive Threshold | ⚠️ **HURTS** (+147% CER) |
-| 4 | Deskew ON/OFF | No effect (already aligned) |
-| 5 | Ablation | Doc Detection = biggest gain |
-| 6 | PaddleOCR vs Tesseract | PaddleOCR **4x better** |
-| 7 | CNN Quality Filter | 10% images rejected |
-| 8 | CNN Threshold | **0.3 = sweet spot** (-43% CER) |
-| 9 | Regex vs LLM | LLM **+23% F1** |
-| 10 | Zero-shot vs Few-shot | Identical (F1=0.789) |
-| 11 | GT vs Real OCR → Parser | Real OCR slightly better |
-| 12 | Full Pipeline vs Naive | CER -46%, F1 +26% |
-| 13 | Resolution Impact | 25%: unusable, 100%: best |
+| #   | Experiment              | Result                          |
+| --- | ----------------------- | ------------------------------- |
+| 1   | Preprocessing ON/OFF    | CER: 0.294 → 0.158 (**-46%**)   |
+| 2   | CLAHE ON/OFF            | CER: 0.254 → 0.158 (**-38%**)   |
+| 3   | Adaptive Threshold      | ⚠️ **HURTS** (+147% CER)        |
+| 4   | Deskew ON/OFF           | No effect (already aligned)     |
+| 5   | Ablation                | Doc Detection = biggest gain    |
+| 6   | PaddleOCR vs Tesseract  | PaddleOCR **4x better**         |
+| 7   | CNN Quality Filter      | 10% images rejected             |
+| 8   | CNN Threshold           | **0.3 = sweet spot** (-43% CER) |
+| 9   | Regex vs LLM            | LLM **+23% F1**                 |
+| 10  | Zero-shot vs Few-shot   | Identical (F1=0.789)            |
+| 11  | GT vs Real OCR → Parser | Real OCR slightly better        |
+| 12  | Full Pipeline vs Naive  | CER -46%, F1 +26%               |
+| 13  | Resolution Impact       | 25%: unusable, 100%: best       |
 
 > Full details in [`docs/report.md`](docs/report.md)
 
@@ -123,14 +123,14 @@ invoice-ai/
 
 ## Notebooks
 
-| # | Notebook | Description |
-|---|----------|-------------|
-| 01 | `01_eda.ipynb` | Exploratory Data Analysis |
-| 02 | `02_preprocessing.ipynb` | Preprocessing visualization |
-| 03 | `03_ocr_comparison.ipynb` | PaddleOCR vs Tesseract |
-| 04 | `04_quality_model.ipynb` | CNN training & evaluation |
-| 05 | `05_parser_comparison.ipynb` | Regex vs LLM parser |
-| 06 | `06_final_results.ipynb` | Consolidated results |
+| #   | Notebook                     | Description                 |
+| --- | ---------------------------- | --------------------------- |
+| 01  | `01_eda.ipynb`               | Exploratory Data Analysis   |
+| 02  | `02_preprocessing.ipynb`     | Preprocessing visualization |
+| 03  | `03_ocr_comparison.ipynb`    | PaddleOCR vs Tesseract      |
+| 04  | `04_quality_model.ipynb`     | CNN training & evaluation   |
+| 05  | `05_parser_comparison.ipynb` | Regex vs LLM parser         |
+| 06  | `06_final_results.ipynb`     | Consolidated results        |
 
 ## License
 
