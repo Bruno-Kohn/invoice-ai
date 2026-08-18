@@ -114,7 +114,7 @@
 - [x] Histograma antes/depois de CLAHE
 - [x] Deskew antes/depois
 - [x] Bounding boxes do OCR sobrepostos
-- [ ] Grad-CAM da CNN
+- [x] Grad-CAM da CNN
 - [x] Exemplos de falha (OCR errado, parser errado)
 - [x] Diagrama da arquitetura da CNN
 
