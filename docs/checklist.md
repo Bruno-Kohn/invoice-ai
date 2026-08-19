@@ -127,7 +127,7 @@
 
 ### Stretch Goals
 
-- [ ] FastAPI demo endpoint ou Streamlit app
+- [x] FastAPI demo endpoint ou Streamlit app
 - [ ] GitHub Actions (lint ruff + pytest)
 - [ ] Docker para reprodutibilidade
 - [ ] Colab badge nos notebooks
